@@ -33,8 +33,8 @@ from distutils.core import setup
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-setup(name="servicex",
-      version='0.3.rc1',
+setup(name="servicex-cli",
+      version='0.3.0',
       packages=find_packages('src'),
       package_dir={'': 'src'},
       scripts=[],
@@ -48,7 +48,7 @@ setup(name="servicex",
       author_email="bengal1@illinois.edu",
       maintainer="Ben Galewsky (IRIS-HEP/NCSA/University of Illinois)",
       maintainer_email="bengal1@illinois.edu",
-      url="https://github.com/iris-hep/func_adl_xAOD",
+      url="https://github.com/ssl-hep/servicex_cli",
       license='bsd 3 clause',
       python_requires='>=3.6',
       test_suite="tests",
@@ -56,16 +56,11 @@ setup(name="servicex",
           "kubernetes"
       ],
       extras_require={
-          'test': [
-              'pytest>=3.9',
-              'pytest-mock',
-              'pytest-cov',
-              'coverage',
-              'flake8',
-              'codecov',
-              'autopep8',
-              'twine'
-          ],
+          'test': ['flake8==3.5',
+                   'pytest',
+                   'pytest-mock',
+                   'coverage==4.5.2',
+                   'codecov==2.0.15'],
       },
       classifiers=[
           "Development Status :: 3 - Alpha",
