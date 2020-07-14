@@ -77,7 +77,7 @@ def create_certs_secret(namespace, secret_name, cert_dir):
                              metadata=client.V1ObjectMeta(name=secret_name))
 
     client.CoreV1Api().create_namespaced_secret(namespace=namespace, body=secret)
-    print("Successfully created grid-certs-secret.")
+    print(f"Successfully created {secret_name}.")
 
 
 def create_app_secret(namespace, secret_name, webhook_url):
@@ -96,15 +96,25 @@ def create_app_secret(namespace, secret_name, webhook_url):
                              type='Opaque',
                              metadata=client.V1ObjectMeta(name=secret_name))
     client.CoreV1Api().create_namespaced_secret(namespace=namespace, body=secret)
-    print("Successfully created servicex-app-secret.")
+    print(f"Successfully created {secret_name}. Please add this to your values.yaml file under `app.secret`.")
 
 
-def clear_cluster(secret_name, namespace):
+def clear_cluster(namespace):
+    secret_names = [
+        "grid-certs-secret",
+        "servicex-app-secret"
+    ]
+
+    for name in secret_names:
+        clear_secret(namespace, name)
+
+
+def clear_secret(namespace, secret_name):
     try:
         client.CoreV1Api().delete_namespaced_secret(namespace=namespace, name=secret_name)
-        print("Secret cleared")
+        print(f"Cleared {secret_name}.")
     except kubernetes.client.rest.ApiException:
-        print("Empty Cluster. Nothing to do....")
+        print(f"No existing {secret_name} to clear.")
 
 
 def main():
@@ -115,7 +125,7 @@ def main():
         init_cluster(args)
 
     elif args.command == 'clear':
-        clear_cluster("grid-certs-secret", args.namespace)
+        clear_cluster(args.namespace)
 
     elif args.command == 'version':
         print("ServiceX CLI Version " + pkg_resources.get_distribution('servicex-cli').version)
