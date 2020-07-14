@@ -37,23 +37,31 @@ import os
 import getpass
 
 parser = argparse.ArgumentParser("ServiceX Command Line Interface")
-parser.add_argument("command", choices=["init", "version", "clear"])
+parser.add_argument("command", choices=["init", "clear", "version"])
+parser.add_argument("--namespace", "-n",
+                    default='default',
+                    help="Namespace where secrets should be created")
 parser.add_argument("--cert-dir",
                     default="~/.globus",
                     help="Directory where your grid certs are located")
-parser.add_argument("--namespace", "-n",
-                    default='default',
-                    help="Namespace where secret should be created")
+parser.add_argument("--webhook",
+                    help="Slack incoming webhook URL for notifications about new user registrations")
 
 
-def init_cluster(cert_dir, secret_name, namespace):
+def init_cluster(args):
+    ns = args.namespace
+    create_certs_secret(ns, "grid-certs-secret", args.cert_dir)
+    create_app_secret(ns, "servicex-app-secret", args.webhook)
+
+
+def create_certs_secret(namespace, secret_name, cert_dir):
     passphrase = getpass.getpass("Enter passphrase for certs: ")
 
     try:
         client.CoreV1Api().delete_namespaced_secret(namespace=namespace, name=secret_name)
-        print("Existing secret cleared")
+        print("Existing grid-certs-secret cleared.")
     except kubernetes.client.rest.ApiException:
-        print("Empty Cluster. Creating secrets for the first time")
+        print("No existing grid-certs-secret, creating for the first time.")
 
     data = {'passphrase': base64.b64encode(passphrase.encode()).decode("ascii")}
 
@@ -69,6 +77,26 @@ def init_cluster(cert_dir, secret_name, namespace):
                              metadata=client.V1ObjectMeta(name=secret_name))
 
     client.CoreV1Api().create_namespaced_secret(namespace=namespace, body=secret)
+    print("Successfully created grid-certs-secret.")
+
+
+def create_app_secret(namespace, secret_name, webhook_url):
+    if webhook_url is None:
+        return
+
+    try:
+        client.CoreV1Api().delete_namespaced_secret(namespace=namespace, name=secret_name)
+        print("Existing servicex-app-secret cleared")
+    except kubernetes.client.rest.ApiException:
+        print("No existing servicex-app-secret, creating for the first time")
+
+    data = {'SLACK_WEBHOOK_URL': base64.b64encode(bytes(webhook_url, 'ascii')).decode('ascii')}
+    secret = client.V1Secret(data=data,
+                             kind='Secret',
+                             type='Opaque',
+                             metadata=client.V1ObjectMeta(name=secret_name))
+    client.CoreV1Api().create_namespaced_secret(namespace=namespace, body=secret)
+    print("Successfully created servicex-app-secret.")
 
 
 def clear_cluster(secret_name, namespace):
@@ -84,7 +112,7 @@ def main():
     args = parser.parse_args()
 
     if args.command == 'init':
-        init_cluster(args.cert_dir, "grid-certs-secret", args.namespace)
+        init_cluster(args)
 
     elif args.command == 'clear':
         clear_cluster("grid-certs-secret", args.namespace)
