@@ -111,7 +111,8 @@ def create_app_secret(namespace, secret_name, webhook_url):
                              type='Opaque',
                              metadata=client.V1ObjectMeta(name=secret_name))
     client.CoreV1Api().create_namespaced_secret(namespace=namespace, body=secret)
-    print(f"Successfully created {secret_name}. Please add this to your values.yaml file under `app.secret`.")
+    print(f"Successfully created {secret_name}. "
+          f"Please add this to your values.yaml file under `app.secret`.")
 
 
 def clear_cluster(args):
