@@ -65,7 +65,7 @@ clear_parser.add_argument("secret",
                           help="Name of secret which should be cleared")
 
 # Version command
-version_parser = subparsers.add_parser("version", help="")
+version_parser = subparsers.add_parser("version")
 
 
 def init_cluster(args):
@@ -134,7 +134,6 @@ def clear_secret(namespace, secret_name):
 def main():
     kubernetes.config.load_kube_config()
     args = parser.parse_args()
-    print(args)
 
     if args.command == 'init':
         init_cluster(args)
