@@ -36,33 +36,49 @@ import os.path
 import os
 import getpass
 
-parser = argparse.ArgumentParser("ServiceX Command Line Interface")
-parser.add_argument("command", choices=["init", "clear", "version"])
-parser.add_argument("--namespace", "-n",
-                    default='default',
+secret_choices = ["certs", "app", "all"]
+
+parser = argparse.ArgumentParser("servicex")
+parser.add_argument('--namespace', "-n",
+                    default="default",
                     help="Namespace where secrets should be created")
-parser.add_argument("--cert-dir",
-                    default="~/.globus",
-                    help="Directory where your grid certs are located")
-parser.add_argument("--webhook",
-                    help="Slack incoming webhook URL for notifications about new user registrations")
+subparsers = parser.add_subparsers(dest="command", required=True)
+
+# Init command
+init_parser = subparsers.add_parser("init", help="Initialize secret(s)")
+init_parser.add_argument('secret',
+                         default="all",
+                         choices=secret_choices,
+                         help="Name of secret which should be initialized")
+init_parser.add_argument("--cert-dir",
+                         default="~/.globus",
+                         help="Directory where your grid certs are located")
+init_parser.add_argument("--webhook",
+                         help="Slack incoming webhook URL for notifications"
+                              "about new user registrations")
+
+# Clear command
+clear_parser = subparsers.add_parser('clear', help="Clear secret(s)")
+clear_parser.add_argument("secret",
+                          default="all",
+                          choices=secret_choices,
+                          help="Name of secret which should be cleared")
+
+# Version command
+version_parser = subparsers.add_parser("version", help="")
 
 
 def init_cluster(args):
-    ns = args.namespace
-    create_certs_secret(ns, "grid-certs-secret", args.cert_dir)
-    create_app_secret(ns, "servicex-app-secret", args.webhook)
+    namespace, secret = args.namespace, args.secret
+    if secret in ["certs", "all"]:
+        create_certs_secret(namespace, "grid-certs-secret", args.cert_dir)
+    if secret in ["app", "all"]:
+        create_app_secret(namespace, "servicex-app-secret", args.webhook)
 
 
 def create_certs_secret(namespace, secret_name, cert_dir):
+    clear_secret(namespace, secret_name)
     passphrase = getpass.getpass("Enter passphrase for certs: ")
-
-    try:
-        client.CoreV1Api().delete_namespaced_secret(namespace=namespace, name=secret_name)
-        print("Existing grid-certs-secret cleared.")
-    except kubernetes.client.rest.ApiException:
-        print("No existing grid-certs-secret, creating for the first time.")
-
     data = {'passphrase': base64.b64encode(passphrase.encode()).decode("ascii")}
 
     with open(os.path.expanduser(os.path.join(cert_dir, 'usercert.pem')), 'rb') as usercert_file:
@@ -81,16 +97,15 @@ def create_certs_secret(namespace, secret_name, cert_dir):
 
 
 def create_app_secret(namespace, secret_name, webhook_url):
-    if webhook_url is None:
-        return
+    clear_secret(namespace, secret_name)
 
-    try:
-        client.CoreV1Api().delete_namespaced_secret(namespace=namespace, name=secret_name)
-        print("Existing servicex-app-secret cleared")
-    except kubernetes.client.rest.ApiException:
-        print("No existing servicex-app-secret, creating for the first time")
+    data = {}
+    if webhook_url:
+        url_bytes = bytes(webhook_url, 'ascii')
+        data['SLACK_WEBHOOK_URL'] = base64.b64encode(url_bytes).decode('ascii')
+    else:
+        print("No webhook URL provided.")
 
-    data = {'SLACK_WEBHOOK_URL': base64.b64encode(bytes(webhook_url, 'ascii')).decode('ascii')}
     secret = client.V1Secret(data=data,
                              kind='Secret',
                              type='Opaque',
@@ -99,14 +114,12 @@ def create_app_secret(namespace, secret_name, webhook_url):
     print(f"Successfully created {secret_name}. Please add this to your values.yaml file under `app.secret`.")
 
 
-def clear_cluster(namespace):
-    secret_names = [
-        "grid-certs-secret",
-        "servicex-app-secret"
-    ]
-
-    for name in secret_names:
-        clear_secret(namespace, name)
+def clear_cluster(args):
+    namespace, secret = args.namespace, args.secret
+    if secret in ["certs", "all"]:
+        clear_secret(namespace, "grid-certs-secret")
+    if secret in ["app", "all"]:
+        clear_secret(namespace, "servicex-app-secret")
 
 
 def clear_secret(namespace, secret_name):
@@ -120,12 +133,13 @@ def clear_secret(namespace, secret_name):
 def main():
     kubernetes.config.load_kube_config()
     args = parser.parse_args()
+    print(args)
 
     if args.command == 'init':
         init_cluster(args)
 
     elif args.command == 'clear':
-        clear_cluster(args.namespace)
+        clear_cluster(args)
 
     elif args.command == 'version':
         print("ServiceX CLI Version " + pkg_resources.get_distribution('servicex-cli').version)
