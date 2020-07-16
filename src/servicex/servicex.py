@@ -36,8 +36,6 @@ import os.path
 import os
 import getpass
 
-secret_choices = ["certs", "all"]
-
 parser = argparse.ArgumentParser("servicex")
 parser.add_argument('--namespace', "-n",
                     default="default",
@@ -46,10 +44,9 @@ subparsers = parser.add_subparsers(dest="command", required=True)
 
 # Init command
 init_parser = subparsers.add_parser("init", help="Initialize secret(s)")
-init_parser.add_argument('secret',
-                         default="all",
+init_parser.add_argument('secrets',
+                         default=["all"],
                          nargs='*',
-                         choices=secret_choices,
                          help="Secret which should be initialized")
 init_parser.add_argument("--cert-dir",
                          default="~/.globus",
@@ -57,10 +54,9 @@ init_parser.add_argument("--cert-dir",
 
 # Clear command
 clear_parser = subparsers.add_parser('clear', help="Clear secret(s)")
-clear_parser.add_argument("secret",
-                          default="all",
+clear_parser.add_argument("secrets",
+                          default=["all"],
                           nargs='*',
-                          choices=secret_choices,
                           help="Name of secret which should be cleared")
 
 # Version command
@@ -68,8 +64,8 @@ version_parser = subparsers.add_parser("version")
 
 
 def init_cluster(args):
-    namespace, secret = args.namespace, args.secret
-    if secret in ["certs", "all"]:
+    namespace, secrets = args.namespace, args.secrets
+    if "certs" in secrets or "all" in secrets:
         create_certs_secret(namespace, "grid-certs-secret", args.cert_dir)
 
 
@@ -94,8 +90,8 @@ def create_certs_secret(namespace, secret_name, cert_dir):
 
 
 def clear_cluster(args):
-    namespace, secret = args.namespace, args.secret
-    if secret in ["certs", "all"]:
+    namespace, secrets = args.namespace, args.secrets
+    if "certs" in secrets or "all" in secrets:
         clear_secret(namespace, "grid-certs-secret")
 
 
