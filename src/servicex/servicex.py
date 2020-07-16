@@ -36,7 +36,7 @@ import os.path
 import os
 import getpass
 
-secret_choices = ["certs", "app", "all"]
+secret_choices = ["certs", "all"]
 
 parser = argparse.ArgumentParser("servicex")
 parser.add_argument('--namespace', "-n",
@@ -48,14 +48,12 @@ subparsers = parser.add_subparsers(dest="command", required=True)
 init_parser = subparsers.add_parser("init", help="Initialize secret(s)")
 init_parser.add_argument('secret',
                          default="all",
+                         nargs='*',
                          choices=secret_choices,
-                         help="Name of secret which should be initialized")
+                         help="Secret which should be initialized")
 init_parser.add_argument("--cert-dir",
                          default="~/.globus",
                          help="Directory where your grid certs are located")
-init_parser.add_argument("--webhook",
-                         help="Slack incoming webhook URL for notifications"
-                              "about new user registrations")
 
 # Clear command
 clear_parser = subparsers.add_parser('clear', help="Clear secret(s)")
@@ -72,8 +70,6 @@ def init_cluster(args):
     namespace, secret = args.namespace, args.secret
     if secret in ["certs", "all"]:
         create_certs_secret(namespace, "grid-certs-secret", args.cert_dir)
-    if secret in ["app", "all"]:
-        create_app_secret(namespace, "servicex-app-secret", args.webhook)
 
 
 def create_certs_secret(namespace, secret_name, cert_dir):
@@ -96,31 +92,10 @@ def create_certs_secret(namespace, secret_name, cert_dir):
     print(f"Successfully created {secret_name}.")
 
 
-def create_app_secret(namespace, secret_name, webhook_url):
-    clear_secret(namespace, secret_name)
-
-    data = {}
-    if webhook_url:
-        url_bytes = bytes(webhook_url, 'ascii')
-        data['SLACK_WEBHOOK_URL'] = base64.b64encode(url_bytes).decode('ascii')
-    else:
-        print("No webhook URL provided.")
-
-    secret = client.V1Secret(data=data,
-                             kind='Secret',
-                             type='Opaque',
-                             metadata=client.V1ObjectMeta(name=secret_name))
-    client.CoreV1Api().create_namespaced_secret(namespace=namespace, body=secret)
-    print(f"Successfully created {secret_name}. "
-          f"Please add this to your values.yaml file under `app.secret`.")
-
-
 def clear_cluster(args):
     namespace, secret = args.namespace, args.secret
     if secret in ["certs", "all"]:
         clear_secret(namespace, "grid-certs-secret")
-    if secret in ["app", "all"]:
-        clear_secret(namespace, "servicex-app-secret")
 
 
 def clear_secret(namespace, secret_name):
