@@ -59,6 +59,7 @@ init_parser.add_argument("--cert-dir",
 clear_parser = subparsers.add_parser('clear', help="Clear secret(s)")
 clear_parser.add_argument("secret",
                           default="all",
+                          nargs='*',
                           choices=secret_choices,
                           help="Name of secret which should be cleared")
 
