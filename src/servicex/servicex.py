@@ -40,7 +40,8 @@ parser = argparse.ArgumentParser("servicex")
 parser.add_argument('--namespace', "-n",
                     default="default",
                     help="Namespace where secrets should be created")
-subparsers = parser.add_subparsers(dest="command", required=True)
+subparsers = parser.add_subparsers(dest="command")
+subparsers.required = True
 
 # Init command
 init_parser = subparsers.add_parser("init", help="Initialize secret(s)")
