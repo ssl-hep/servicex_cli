@@ -22,7 +22,7 @@ servicex version
 The ServiceX CLI can be used to initialize ServiceX as follows:
 
 ```bash
-servicex init [certs|all] [--namespace <namespace>] [--cert-dir <cert dir>]
+servicex [--namespace <namespace>] init [certs|all] [--cert-dir <cert dir>]
 ```
 
 Run `servicex init` to set up everything, or specify one or more components 
@@ -35,7 +35,8 @@ By default, the CLI will find certs in `.globus` in your home directory. You can
 override this by providing a `--cert-dir` command line option.
 
 By default the secret will be created in the `default` namespace. You can
-override this by providing a `--namespace` command line option.
+override this by providing a `--namespace` command line option 
+(this must precede the `init` command). 
 
 You will be prompted for your grid cert passphrase. This 
 will not be echoed to the screen, but will be stored in the Kubernetes Secret.
@@ -46,11 +47,11 @@ If you want to remove the installed Secrets from the cluster then
 you can use:
 
 ```bash
-servicex clear [certs|all] [--namespace <namespace>]
+servicex [--namespace <namespace>] clear [certs|all]
 ```
 
 Run `servicex clear` to clear all Secrets, or specify one or more components 
 (e.g. `servicex clear certs`).
-This takes the same `--namespace` argument as the `init` command to remove the 
+Specify a `--namespace` argument which precedes the `clear` command to remove the 
 Secrets from that namespace.
 
