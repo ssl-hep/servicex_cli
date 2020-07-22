@@ -34,7 +34,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setup(name="servicex-cli",
-      version='0.3.0',
+      version='1.0.0-RC.1  ',
       packages=find_packages('src'),
       package_dir={'': 'src'},
       scripts=[],
