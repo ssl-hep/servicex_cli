@@ -27,6 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import argparse
+import sys
 
 import kubernetes
 import pkg_resources
@@ -35,6 +36,7 @@ import base64
 import os.path
 import os
 import getpass
+from OpenSSL.crypto import FILETYPE_PEM, load_privatekey, Error
 
 parser = argparse.ArgumentParser("servicex")
 parser.add_argument('--namespace', "-n",
@@ -80,6 +82,14 @@ def create_certs_secret(namespace, secret_name, cert_dir):
 
     with open(os.path.expanduser(os.path.join(cert_dir, 'userkey.pem')), 'rb') as userkey_file:
         data['userkey.pem'] = base64.b64encode(userkey_file.read()).decode("ascii")
+
+    try:
+        _ = load_privatekey(FILETYPE_PEM,
+                              base64.b64decode(data['userkey.pem']),
+                              passphrase=passphrase.encode('utf8'))
+    except Error:
+        print("Passphrase does not unlock key file")
+        sys.exit(-1)
 
     secret = client.V1Secret(data=data,
                              kind='Secret',
