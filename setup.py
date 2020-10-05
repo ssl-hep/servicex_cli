@@ -34,12 +34,12 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setup(name="servicex-cli",
-      version='1.0.0-RC.2',
+      version='1.0.0-RC.3',
       packages=find_packages('src'),
       package_dir={'': 'src'},
       scripts=[],
       entry_points={
-          'console_scripts': ['servicex=servicex.servicex:main'],
+          'console_scripts': ['servicex=servicex_cli.servicex:main'],
       },
       description="CLI for the ServiceX Data Server",
       long_description=long_description,
@@ -53,6 +53,7 @@ setup(name="servicex-cli",
       python_requires='>=3.6',
       test_suite="tests",
       install_requires=[
+          "oauthlib==3.1.0",
           "kubernetes"
       ],
       extras_require={
