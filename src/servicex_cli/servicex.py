@@ -88,7 +88,7 @@ def create_certs_secret(namespace, secret_name, cert_dir):
                               base64.b64decode(data['userkey.pem']),
                               passphrase=passphrase.encode('utf8'))
     except Error:
-        print("Passphrase does not unlock key file")
+        print("Passphrase does not unlock key file. Please correct and try again.")
         sys.exit(-1)
 
     secret = client.V1Secret(data=data,
