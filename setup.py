@@ -54,7 +54,8 @@ setup(name="servicex-cli",
       test_suite="tests",
       install_requires=[
           "oauthlib==3.1.0",
-          "kubernetes"
+          "kubernetes",
+          "pyopenssl==19.1.0"
       ],
       extras_require={
           'test': ['flake8==3.5',
