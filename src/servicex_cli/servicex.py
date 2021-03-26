@@ -28,6 +28,7 @@
 
 import argparse
 import sys
+import json
 
 import kubernetes
 import pkg_resources
@@ -95,8 +96,15 @@ def create_certs_secret(namespace, secret_name, cert_dir):
                              kind='Secret',
                              type='Opaque',
                              metadata=client.V1ObjectMeta(name=secret_name))
-
-    client.CoreV1Api().create_namespaced_secret(namespace=namespace, body=secret)
+    try:
+      client.CoreV1Api().create_namespaced_secret(namespace=namespace, body=secret)
+    except kubernetes.client.exceptions.ApiException as e:
+      resp = json.loads(e.body)
+      sys.stderr.write(f"Got an error while creating secret on kubernetes cluster: {resp['message']}\n")
+      sys.exit(-1)
+    except Error:
+      sys.stderr.write(f"Got an error while creating secret on kubernetes cluster\n")
+      sys.exit(-1)
     print(f"Successfully created {secret_name}.")
 
 
