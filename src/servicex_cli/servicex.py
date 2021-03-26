@@ -77,18 +77,25 @@ def create_certs_secret(namespace, secret_name, cert_dir):
     passphrase = getpass.getpass("Enter passphrase for certs: ")
     data = {'passphrase': base64.b64encode(passphrase.encode()).decode("ascii")}
 
-    with open(os.path.expanduser(os.path.join(cert_dir, 'usercert.pem')), 'rb') as usercert_file:
-        data['usercert.pem'] = base64.b64encode(usercert_file.read()).decode("ascii")
+    expanded_cert_dir = os.path.expanduser(cert_dir)
+    if not os.path.isdir(expanded_cert_dir):
+      sys.stderr.write(f"Can't locate {expanded_cert_dir}, exiting.\n")
+      sys.exit(-1)
 
-    with open(os.path.expanduser(os.path.join(cert_dir, 'userkey.pem')), 'rb') as userkey_file:
-        data['userkey.pem'] = base64.b64encode(userkey_file.read()).decode("ascii")
+    for fname in ['usercert.pem', 'userkey.pem']:
+      cert_filename = os.path.join(expanded_cert_dir, fname)
+      if not os.path.isfile(cert_filename):
+        sys.stderr.write(f"Can't locate {cert_filename}, exiting.\n")
+        sys.exit(-1)
+      with open(os.path.join(expanded_cert_dir, fname), 'rb') as cert_file:
+        data[fname] = base64.b64encode(cert_file.read()).decode("ascii")
 
     try:
         _ = load_privatekey(FILETYPE_PEM,
                               base64.b64decode(data['userkey.pem']),
                               passphrase=passphrase.encode('utf8'))
     except Error:
-        print("Passphrase does not unlock key file. Please correct and try again.")
+        sys.stderr.write("Passphrase does not unlock key file. Please correct and try again.\n")
         sys.exit(-1)
 
     secret = client.V1Secret(data=data,
