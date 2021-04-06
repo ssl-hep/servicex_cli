@@ -26,15 +26,24 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # setuptools loads some plugins necessary for use here.
+import os
+
 from setuptools import find_packages  # noqa: F401
 from distutils.core import setup
 
+
+version = os.getenv('servicex_version')
+if version is None:
+    version = '0.1a1'
+else:
+    version = version.split('/')[-1]
+    
 # Use the readme as the long description.
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setup(name="servicex-cli",
-      version='1.0.0',
+      version=version,
       packages=find_packages('src'),
       package_dir={'': 'src'},
       scripts=[],
