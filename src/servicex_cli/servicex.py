@@ -51,7 +51,7 @@ init_parser = subparsers.add_parser("init", help="Initialize secret(s)")
 init_parser.add_argument('secrets',
                          default=["all"],
                          nargs='*',
-                         help="Secret which should be initialized")
+                         help="Which ServiceX secrets should be initialized (certs, all)")
 init_parser.add_argument("--cert-dir",
                          default="~/.globus",
                          help="Directory where your grid certs are located")
@@ -61,7 +61,7 @@ clear_parser = subparsers.add_parser('clear', help="Clear secret(s)")
 clear_parser.add_argument("secrets",
                           default=["all"],
                           nargs='*',
-                          help="Name of secret which should be cleared")
+                          help="Which ServiceX secrets should be cleared")
 
 # Version command
 version_parser = subparsers.add_parser("version")
