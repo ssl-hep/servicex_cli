@@ -37,7 +37,7 @@ if version is None:
     version = '0.1a1'
 else:
     version = version.split('/')[-1]
-    
+
 # Use the readme as the long description.
 with open("README.md", "r") as fh:
     long_description = fh.read()
@@ -62,9 +62,9 @@ setup(name="servicex-cli",
       python_requires='>=3.6',
       test_suite="tests",
       install_requires=[
-          "oauthlib==3.1.0",
+          "oauthlib",
           "kubernetes",
-          "pyopenssl==19.1.0"
+          "pyopenssl>=23.1.1"
       ],
       extras_require={
           'test': ['flake8==3.5',
